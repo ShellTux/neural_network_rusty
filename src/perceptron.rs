@@ -1,5 +1,5 @@
 use crate::matrix::Matrix;
-use rand::{rng, Rng};
+use rand::{prelude::SliceRandom, rng, Rng};
 use std::fmt::Debug;
 
 #[derive(Debug)]
@@ -44,8 +44,17 @@ impl Perceptron {
     }
 
     pub fn train(&mut self, inputs: &Vec<Matrix<f32>>, labels: &[i32], epochs: usize) {
+        assert_eq!(inputs.len(), labels.len());
+
         for _ in 0..epochs {
-            for (input, &label) in inputs.iter().zip(labels.iter()) {
+            let mut rng = rng();
+            let mut indices: Vec<usize> = (0..inputs.len()).collect();
+            indices.shuffle(&mut rng);
+
+            indices.iter().for_each(|&i| {
+                let input = &inputs[i];
+                let label = labels[i];
+
                 let prediction = self.predict(input);
                 let error = label - prediction;
 
@@ -54,7 +63,7 @@ impl Perceptron {
                     .weights
                     .map(|x| x + self.learning_rate * error as f32 * x);
                 self.bias += self.learning_rate * error as f32;
-            }
+            });
         }
     }
 }
