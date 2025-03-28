@@ -1,5 +1,10 @@
 use crate::matrix::Matrix;
 use rand::{prelude::SliceRandom, rng, Rng};
+use raylib::{
+    color::Color,
+    math::Vector2,
+    prelude::{RaylibDraw, RaylibDrawHandle},
+};
 use std::fmt::Debug;
 
 #[derive(Debug)]
@@ -65,5 +70,57 @@ impl Perceptron {
                 self.bias += self.learning_rate * error as f32;
             });
         }
+    }
+
+    pub fn visualize(&self, rdh: &mut RaylibDrawHandle<'_>, input_data: &Matrix<f32>) {
+        let width = rdh.get_render_width();
+        let height = rdh.get_render_height();
+
+        let perceptron_pos = Vector2::new(width as f32 / 2., height as f32 / 2.);
+        let perceptron_radius = 30.0; // Radius of the perceptron circle
+
+        // Draw the perceptron circle with its value
+        let perceptron_value = self.predict(&input_data);
+        let perceptron_color = if perceptron_value == 1 {
+            Color::GREEN
+        } else {
+            Color::RED
+        };
+
+        self.weights.foreachi(|weight, _, j| {
+            let input = input_data.get(0, j).unwrap();
+
+            let input_pos = Vector2::new(
+                (perceptron_pos.x - 100.) as f32,
+                (perceptron_pos.y as usize + j * 100 - 50) as f32,
+            );
+
+            let weight_thickness = (weight.abs() * 20.) as i32;
+
+            rdh.draw_line_ex(
+                input_pos,
+                perceptron_pos,
+                weight_thickness as f32,
+                Color::BLUE,
+            );
+
+            rdh.draw_circle_v(input_pos, 20., Color::RED);
+            rdh.draw_text(
+                input.to_string().as_ref(),
+                input_pos.x as i32 - 10,
+                input_pos.y as i32 - 10,
+                20,
+                Color::WHITE,
+            );
+        });
+
+        rdh.draw_circle_v(perceptron_pos, perceptron_radius, perceptron_color);
+        rdh.draw_text(
+            &perceptron_value.to_string(),
+            perceptron_pos.x as i32 - 10,
+            perceptron_pos.y as i32 - 10,
+            20,
+            Color::WHITE,
+        );
     }
 }
