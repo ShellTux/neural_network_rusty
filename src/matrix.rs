@@ -25,6 +25,12 @@ impl One for f32 {
     }
 }
 
+impl One for f64 {
+    fn one() -> Self {
+        1.0
+    }
+}
+
 impl One for i32 {
     fn one() -> Self {
         1
@@ -213,7 +219,6 @@ where
         U: Default
             + Copy
             + Debug
-            + Ord
             + Add<Output = U>
             + Sub<Output = U>
             + Mul<Output = U>
@@ -265,7 +270,7 @@ where
                 let x = start_x + j as i32 * cell_width;
                 let y = start_y + i as i32 * cell_height;
                 rdh.draw_rectangle(x, y, cell_width, cell_height, color);
-                rdh.draw_text(&value.to_string()[0..3], x + 10, y + 15, 20, Color::BLACK);
+                rdh.draw_text(&value.to_string(), x + 10, y + 15, 20, Color::BLACK);
             }
         }
     }
@@ -351,5 +356,65 @@ mod tests {
         let squared_matrix = matrix.map(|x| x * x);
 
         assert_eq!(squared_matrix.data, vec![vec![1, 4], vec![9, 16]]);
+    }
+
+    #[test]
+    fn test_matrix_identity() {
+        let identity_matrix = Matrix::<i32>::identity(3);
+
+        assert_eq!(
+            identity_matrix.data,
+            vec![vec![1, 0, 0], vec![0, 1, 0], vec![0, 0, 1]]
+        );
+    }
+
+    #[test]
+    fn test_matrix_inversion() {
+        let mut matrix: Matrix<f32> = Matrix::new(2, 2);
+        matrix.set(0, 0, 4.);
+        matrix.set(0, 1, 7.);
+        matrix.set(1, 0, 2.);
+        matrix.set(1, 1, 6.);
+
+        let inverted = matrix.invert().unwrap();
+        assert_eq!(inverted.data, vec![vec![0.6, -0.7], vec![-0.2, 0.4]]);
+    }
+
+    #[test]
+    fn test_matrix_inversion_singular() {
+        let mut matrix = Matrix::new(2, 2);
+        matrix.set(0, 0, 1);
+        matrix.set(0, 1, 2);
+        matrix.set(1, 0, 2);
+        matrix.set(1, 1, 4);
+
+        let result = matrix.invert();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_random_matrix_generation() {
+        let rows: usize = 2;
+        let cols: usize = 2;
+        let min: usize = 1;
+        let max: usize = 10;
+
+        let random_matrix = Matrix::random(rows, cols, (min, max));
+        assert_eq!(random_matrix.rows(), rows);
+        assert_eq!(random_matrix.cols(), cols);
+        assert!(random_matrix
+            .data
+            .iter()
+            .all(|row| row.iter().all(|&v| min <= v && v <= max)));
+    }
+
+    #[test]
+    fn test_matrix_get_set() {
+        let mut matrix = Matrix::new(2, 2);
+        matrix.set(0, 0, 1);
+        assert_eq!(matrix.get(0, 0).unwrap(), 1);
+
+        // Test out of bounds
+        assert!(matrix.get(2, 2).is_err());
     }
 }
