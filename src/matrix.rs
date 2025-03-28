@@ -326,6 +326,24 @@ where
         result
     }
 
+    pub fn foreach<F>(&self, mut f: F)
+    where
+        F: FnMut(T),
+    {
+        self.foreachi(|x, _, _| f(x));
+    }
+
+    pub fn foreachi<F>(&self, mut f: F)
+    where
+        F: FnMut(T, usize, usize),
+    {
+        for i in 0..self.rows {
+            for j in 0..self.cols {
+                f(self.data[i][j], i, j);
+            }
+        }
+    }
+
     pub fn print(&self) {
         for row in &self.data {
             for value in row {
